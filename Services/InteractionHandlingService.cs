@@ -21,8 +21,6 @@ public class InteractionHandlingService
     private readonly IServiceProvider _services;
     private readonly IConfiguration _configuration;
 
-    private RestUserMessage? updatingMessage;
-
     public InteractionHandlingService(DiscordSocketClient client, InteractionService handler, IServiceProvider services, IConfiguration config)
     {
         _client = client;
@@ -64,9 +62,26 @@ public class InteractionHandlingService
             while (_client.LoginState == LoginState.LoggedIn)
             {
                 await RunUpdatingStatus();
-                await Task.Delay(30000);
+                await Task.Delay(300000);
             }
         });
+
+        _ = Task.Run(async () =>
+        {
+            while (_client.LoginState == LoginState.LoggedIn)
+            {
+                await RunUpdatingPresence();
+                await Task.Delay(300000);
+            }
+        });
+    }
+
+    public async Task RunUpdatingPresence()
+    {
+        var response = await StatusUtility.GetServerStatus();
+        var info = JsonConvert.DeserializeObject<ServerInfo>(response);
+
+        await _client.SetGameAsync($"{info.Players}/{info.SoftMaxPlayers}", type: ActivityType.Watching);
     }
 
     public async Task RunUpdatingStatus()
@@ -79,12 +94,7 @@ public class InteractionHandlingService
         var channelId = ulong.Parse(channelIdString);
 
         var channel = _client.GetGuild(guildId).GetTextChannel(channelId);
-        var messages = channel.GetMessagesAsync(10).Flatten();
-
-        await foreach (RestUserMessage message in messages)
-        {
-            await message.DeleteAsync();
-        }
+        RestUserMessage updatingMessage = (RestUserMessage) await channel.GetMessageAsync(1282351739181207655);
 
         var actions = new ComponentBuilder()
             .WithButton("Stop", "grimbly:status:stop")
@@ -107,23 +117,12 @@ public class InteractionHandlingService
             .WithDescription("Status of Grimbly Station")
             .Build();
 
-        if (updatingMessage == null)
-        {
-            updatingMessage = await channel.SendMessageAsync(
-                "Last updated <t:" + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + ":R>",
-                embed: embed,
-                components: actions
-            );
-        }
-        else
-        {
-            await updatingMessage.ModifyAsync(x =>
+        await updatingMessage.ModifyAsync(x =>
             {
                 x.Content = "Last updated <t:" + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + ":R>";
                 x.Embed = embed;
             }
-            );
-        }
+        );
     }
 
     private string GetStatus(int runLevel)
@@ -177,11 +176,21 @@ public class InteractionHandlingService
         var split = component.Data.CustomId.Split(":");
 
         if (!(split.Length > 2)) return;
+        if (component.GuildId == null) return;
+
+        var user = _client.GetGuild((ulong)component.GuildId).GetUser(component.User.Id);
+
+        if (!user.Roles.Any(r => r.Name == "The EVIL Council"))
+        {
+            await component.RespondAsync("You do not have permission for this action.", ephemeral: true);
+            return;
+        }
+
         var powerActionString = split[2];
         var powerAction = StatusUtility.TranslateToPowerAction(powerActionString);
 
         var response = await StatusUtility.HandlePowerRequest(powerAction);
-        await component.RespondAsync(response);
+        await component.RespondAsync(response, ephemeral: true);
     }
 
     private Task HandleInteractionExecute(ICommandInfo commandInfo, IInteractionContext context, IResult result)

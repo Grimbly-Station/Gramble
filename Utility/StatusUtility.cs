@@ -8,6 +8,7 @@ public class StatusUtility
     public static async Task<string> GetServerStatus()
     {
         HttpClient client = new HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(2);
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "http://grimbly.net:1212/status");
         HttpResponseMessage response = await client.SendAsync(request);
 
@@ -59,11 +60,11 @@ public class StatusUtility
     {
         switch (powerAction)
         {
-            case Enums.PowerAction.Stop:
+            case PowerAction.Stop:
                 return "stop";
-            case Enums.PowerAction.Restart:
+            case PowerAction.Restart:
                 return "restart";
-            case Enums.PowerAction.Update:
+            case PowerAction.Update:
                 return "update";
             default:
                 return "";
