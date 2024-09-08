@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using dotenv.net;
 using Gramble.Services;
+using Gramble.Utility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,8 +23,8 @@ public class Program
     public static async Task Main(string[] args)
     {
         DotEnv.Load();
-        IDictionary<string, string> env = DotEnv.Read();
-        env.TryGetValue("token", out string? token);
+        DotEnvUtility.Setup();
+        DotEnvUtility.DotEnvDictionary.TryGetValue("token", out string? token);
 
         _configuration = new ConfigurationBuilder()
             .AddYamlFile("appsettings.yml", optional: true)
