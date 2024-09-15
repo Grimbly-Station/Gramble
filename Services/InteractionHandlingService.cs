@@ -59,19 +59,32 @@ public class InteractionHandlingService
         await _handler.RegisterCommandsGloballyAsync();
         _ = Task.Run(async () =>
         {
-            while (_client.LoginState == LoginState.LoggedIn)
+            while (true)
             {
-                await RunUpdatingStatus();
-                await Task.Delay(300000);
+                try
+                {
+                    await RunUpdatingStatus();
+                    await Task.Delay(300000);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
             }
         });
 
         _ = Task.Run(async () =>
         {
-            while (_client.LoginState == LoginState.LoggedIn)
+            while (true)
             {
-                await RunUpdatingPresence();
-                await Task.Delay(300000);
+                try
+                {
+                    await RunUpdatingPresence();
+                    await Task.Delay(300000);
+                } catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
             }
         });
     }

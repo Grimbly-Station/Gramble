@@ -41,14 +41,14 @@ public class StatusUtility
         }
 
         HttpClient client = new HttpClient();
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, host + "/instances/grimble/" + powerActionString);
-        request.Headers.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes("grimble" + ":" + apiToken)));
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, host + "/instances/gromble/" + powerActionString);
+        request.Headers.Add("Authorization", "Basic " + Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes("gromble" + ":" + apiToken)));
 
         HttpResponseMessage response = await client.SendAsync(request);
 
         if (response.IsSuccessStatusCode)
         {
-            return "Successfully sent power action ``" + powerActionString.ToUpper() + "`` to instance ``GRIMBLE``";
+            return "Successfully sent power action ``" + powerActionString.ToUpper() + "`` to instance ``GROMBLE``";
         }
         else
         {
